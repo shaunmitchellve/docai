@@ -1,13 +1,15 @@
 {
+  "name": "doc_ai",
+  "version": "1.0.0",
+  "description": "Reads a file from GCS and processes it against a doc_ai endpoint",
+  "main": "src/index.mjs",
+  "author": "Shaun Mitchell <shaunmitchell@google.com>",
+  "license": "ISC",
   "dependencies": {
     "@google-cloud/bigquery": "^5.6.0",
     "@google-cloud/documentai": "^2.10.0",
     "@google-cloud/storage": "^5.8.5",
     "express": "^4.17.1",
-    "fast-crc32c": "^2.0.0",
-    "n": "^7.3.0",
-    "npm": "^7.19.0",
-    "stable": "^0.1.8",
     "uuid": "^8.3.2"
   },
   "scripts": {

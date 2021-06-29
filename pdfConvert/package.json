@@ -2,7 +2,7 @@
   "name": "pdfconvert",
   "version": "1.0.0",
   "description": "Convert PDF files to PNG files",
-  "main": "src/index.js",
+  "main": "src/index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.mjs"

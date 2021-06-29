@@ -1,4 +1,4 @@
-FROM node:14sudo -slim
+FROM node:14-slim
 
 ARG projectId
 ARG processorId

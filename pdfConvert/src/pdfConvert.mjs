@@ -49,7 +49,7 @@ function convertFile(bucketName, file) {
         const convert = (buffer, fileName, toFileName) => {
             return new Promise( (res, rej) => {
                 gm(buffer, fileName)
-                .density(400, 400)
+                .density(350, 350)
                 .write(toFileName, (er) => {
                     if(er) rej(er)
                     else res('File written');

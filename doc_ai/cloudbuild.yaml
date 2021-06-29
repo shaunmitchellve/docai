@@ -29,9 +29,5 @@ steps:
   - us-west1-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/file-processor
   - --region
   - ${_REGION}
-  - --memory
-  - 4G
-  - --cpu
-  - '2'
   waitFor:
     - push

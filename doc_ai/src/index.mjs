@@ -1,7 +1,7 @@
 /**
  * Seperated the file processor and the endpoint traffic management for greater flexibility
  */
-import processDocument from './doc_ai';
+import processDocument from './doc_ai.mjs';
 import express, { json } from 'express';
 const app = express();
 
@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 8080;
 
 app.use(json());
 
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
     /**
      * Let's make sure that the message coming in is in the correct pub/sub message format.
      */
@@ -34,9 +34,16 @@ app.post('/', (req, res) => {
     const data = pubSubMessage.data ? JSON.parse(Buffer.from(pubSubMessage.data, 'base64').toString().trim()) : '';
 
     if(data.bucket && data.name) {
-        processDocument(data.bucket, data.name);
-        res.status(204).send();
-        return;
+        try{
+            const results = await processDocument(data.bucket, data.name);
+            console.log(results);
+            res.status(204).send();
+            return;
+        } catch (e) {
+            console.error(e);
+            res.status(400).send();
+            returnl
+        }
     } else {
         console.error(`error: pub/sub message didn't contain bucket and file name`);
         res.status(400).send('Bad Request in pub/sub message');
