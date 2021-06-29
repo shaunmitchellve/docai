@@ -1,0 +1,29 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  id: build
+  args:
+  - build
+  - -t
+  - us-west1-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/pdf-convert
+  - --build-arg
+  - projectId=$PROJECT_ID
+  - .
+- name: 'gcr.io/cloud-builders/docker'
+  id: push
+  args:
+  - push
+  - us-west1-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/pdf-convert
+  waitFor:
+    - build
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+  - run
+  - deploy
+  - pdf-converter
+  - --image
+  - us-west1-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/pdf-convert
+  - --region
+  - ${_REGION}
+  waitFor:
+    - push

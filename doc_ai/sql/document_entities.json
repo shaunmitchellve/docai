@@ -1,0 +1,116 @@
+[
+    {
+                "name": "doc_id",
+                "type": "STRING",
+                "mode": "REQUIRED"
+            },
+            {
+                "name": "name",
+                "type": "STRING",
+                "mode": "REQUIRED"
+            },
+            {
+                "name": "num_pages",
+                "type": "INTEGER",
+                "mode": "REQUIRED"
+            },
+            {
+                "name": "mimeType",
+                "type": "STRING",
+                "mode": "REQUIRED"
+            },
+            {
+                "name": "text",
+                "type": "STRING",
+                "mode": "NULLABLE"
+            },
+            {
+                "name": "page",
+                "type": "RECORD",
+                "mode": "REPEATED",
+                "fields": [
+                    {
+                        "name": "page_num",
+                        "type": "INTEGER",
+                        "mode": "REQUIRED"
+                    },
+                    {
+                        "name": "page_width",
+                        "type": "INTEGER",
+                        "mode": "REQUIRED"
+                    },
+                    {
+                        "name": "page_height",
+                        "type": "INTEGER",
+                        "mode": "REQUIRED"
+                    },
+                    {
+                        "name": "page_dimension_unit",
+                        "type": "STRING",
+                        "mode": "REQUIRED"
+                    },
+                    {
+                        "name": "entities",
+                        "type": "RECORD",
+                        "mode": "REPEATED",
+                        "fields": [
+                            {
+                                "name": "entity_name",
+                                "type": "STRING",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "entity_name_confidence",
+                                "type": "float",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "entity_name_start_index",
+                                "type": "INTEGER",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "entity_name_end_index",
+                                "type": "INTEGER",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "entity_value",
+                                "type": "STRING",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "entity_value_confidence",
+                                "type": "float",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "entity_value_start_index",
+                                "type": "INTEGER",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "entity_value_end_index",
+                                "type": "INTEGER",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "vertices",
+                                "type": "STRING",
+                                "mode": "REQUIRED"
+                            },
+                            {
+                                "name": "value_type",
+                                "type": "STRING",
+                                "mode": "NULLABLE"
+                            },
+                            {
+                                "name": "paragraph_text",
+                                "type": "STRING",
+                                "mode": "NULLABLE"
+                            }
+                        ]
+                    }
+                ]
+            }
+]

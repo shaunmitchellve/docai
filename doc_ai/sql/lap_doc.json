@@ -1,0 +1,134 @@
+[
+    {
+        "name": "application_id",
+        "type": "STRING",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "date_signed",
+        "type": "DATE",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "applicants",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+            {
+                "name": "first_name",
+                "type": "STRING",
+                "mode": "NULLABLE"
+            },
+            {
+                "name": "last_name",
+                "type": "STRING",
+                "mode": "NULLABLE"
+            },
+            {
+                "name": "post_sec_school",
+                "type": "STRING",
+                "mode": "NULLABLE"
+            },
+            {
+                "name": "relation_to_applicant",
+                "type": "STRING",
+                "mode": "NULLABLE"
+            },
+            {
+                "name": "member_barcode",
+                "type": "STRING",
+                "mode": "NULLABLE"
+            },
+            {
+                "name": "dob",
+                "type": "DATE",
+                "mode": "NULLABLE"
+            }
+        ]
+    },
+    {
+        "name": "phy_address",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "phy_postal",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "application_type",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "mail_address",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "mail_postal",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "phone",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "marital_status",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "email_address",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "spouse_visit_canada",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "spouse_long_term_care",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "currently_enrolled",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "post_sec_rec_fac",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "upass",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "dats_client",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "dats_client_num",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "cnib_client",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "cnib_client_name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    }
+]
