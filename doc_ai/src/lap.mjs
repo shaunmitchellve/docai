@@ -166,7 +166,7 @@ class LapDoc extends DocInterface {
     }
 
     _convertDate(value) {
-        return value.substring(7, 4) + value.substring(0, 2) + value.substring(3, 2);
+        return value.substr(6, 4) + '-' + value.substr(0, 2) + '-' + value.substr(3, 2);
     }
 }
 

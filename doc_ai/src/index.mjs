@@ -41,7 +41,7 @@ app.post('/', async (req, res) => {
             return;
         } catch (e) {
             console.error(e);
-            res.status(400).send();
+            res.status(400).send(`Document processing error: ${e}`);
             return;
         }
     } else {
