@@ -6,10 +6,11 @@ export REGION=<REGION_FOR_SERVICES>
 export ARTIFACT_NAME=<ARTIFACT_REPO_NAME> #This needs to be created first as the setup.sh file doesn't set the artifact repo
 export BUCKET_NAME=<STORAGE_BUCKET_NAME>
 export PS_TOPIC=<PUB_SUB_TOPIC_NAME>
+export WRITE_BUCKET=<GCS_OUTPUT_BUCKET_NAME>
 
 # Create a build pipeline using the cloudbuild.yaml spec
 gcloud builds submit --config=cloudbuild.yaml \
---substitutions=_REGION="${REGION}",_ARTIFACT_NAME="${ARTIFACT_NAME}" .
+--substitutions=_REGION="${REGION}",_ARTIFACT_NAME="${ARTIFACT_NAME}",_WRITE_BUCKET="${WRITE_BUCKET}" .
 
 # create a notification to the pubsub topic for the bucket
 gsutil notification create -t $PS_TOPIC -f json -e OBJECT_FINALIZE gs://$BUCKET_NAME

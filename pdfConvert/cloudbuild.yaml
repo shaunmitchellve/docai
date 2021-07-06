@@ -6,7 +6,7 @@ steps:
   - -t
   - us-west1-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/pdf-convert
   - --build-arg
-  - projectId=$PROJECT_ID
+  - writeBucket=${_WRITE_BUCKET}
   - .
 - name: 'gcr.io/cloud-builders/docker'
   id: push

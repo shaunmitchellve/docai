@@ -74,7 +74,7 @@ function convertFile(bucketName, file) {
         try {
             const imgName = file.substring(0, file.indexOf('.')) + '.jpeg';
             const buf = await convert(encodedImage, file, imgName);
-            const res = await writeFile( {bucketName: 'coe-training-images', file: imgName }, buf);
+            const res = await writeFile( {bucketName: process.env.WRITEBUCKET, file: imgName }, buf);
             results(res);
             return;
         } catch (e) {
