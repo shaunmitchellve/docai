@@ -17,8 +17,8 @@ import { v4 as uuid } from 'uuid';
 const client = new DocumentProcessorServiceClient();
 const storage = new Storage();
 
-import LapDoc from './lap.mjs';
-const lapdoc = new LapDoc();
+import DocScope from './lap.mjs';
+const docscope = new DocScope();
 
 /**
  * A simple prototype to do a comparison of two integer ranges. This is used
@@ -43,14 +43,14 @@ async function saveData( table, records ) {
 
     const bq = new BigQuery();
 
-    const res = await bq
+    await bq
         .dataset(dataset)
         .table(table)
         .insert(records, {
             createInsertId: true
         })
         .then( (resp) => {
-            console.log('Inserted document');
+            console.log(`Inserted document: ${resp}`);
         })
         .catch( (err) => {
             if(err.name === 'PartialFailureError') {
@@ -225,7 +225,7 @@ async function processDocument(bucketName, file) {
                         const tableHeaderRecord = entityDataRecord(table.bodyRows[0].cells[c].layout, page.dimension);
                         const tableRecord = entityDataRecord(table.bodyRows[i].cells[c].layout, page.dimension);
 
-                        lapdoc.addEntity(tableHeaderRecord, tableRecord, 'table');
+                        docscope.addEntity(tableHeaderRecord, tableRecord, 'table');
 
                         documentEntities.push(
                             { 
@@ -242,8 +242,6 @@ async function processDocument(bucketName, file) {
                         });
                     }
                 }
-
-                console.log(documentEntities);
             }
 
             /**
@@ -256,7 +254,7 @@ async function processDocument(bucketName, file) {
                 const fieldValueRecord = entityDataRecord(field.fieldValue, page.dimension);
                 const question = (field.valueType === 'filled_checkbox') ? getParagraph(field.fieldName.textAnchor.textSegments, paragraphs) : '' ;
                 
-                lapdoc.addEntity(fieldNameRecord, fieldValueRecord, field.valueType);
+                docscope.addEntity(fieldNameRecord, fieldValueRecord, field.valueType);
                 
                 documentEntities.push(
                     {
@@ -315,9 +313,9 @@ async function processDocument(bucketName, file) {
             }
         }
 
-        if(lapdoc.docFound) {
+        if(docscope.docFound) {
             try {
-                await saveData(lapdoc.docTable, lapdoc.doc);
+                await saveData(docscope.docTable, docscope.doc);
             } catch(e) {
                 const errors = [];
                 e.forEach(err => {
