@@ -15,12 +15,12 @@ See setup.sh for more pre-conditions and setup paramaters needed.
 
 ## Products
 
-- [Document AI] (https://cloud.google.com/document-ai)
-- [Cloud Storage] (https://cloud.google.com/storage)
-- [Cloud Pub / Sub] (https://cloud.google.com/pubsub)
-- [Vertex AI: AutoML Vision Object Detection] (https://cloud.google.com/vision/automl/object-detection/docs)
-- [Cloud Run] (https://cloud.google.com/run)
-- [Cloud Build] (https://cloud.google.com/build)
+- [Document AI](https://cloud.google.com/document-ai)
+- [Cloud Storage](https://cloud.google.com/storage)
+- [Cloud Pub / Sub](https://cloud.google.com/pubsub)
+- [Vertex AI: AutoML Vision Object Detection](https://cloud.google.com/vision/automl/object-detection/docs)
+- [Cloud Run](https://cloud.google.com/run)
+- [Cloud Build](https://cloud.google.com/build)
 
 ## Deploy Process
 
