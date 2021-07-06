@@ -42,7 +42,7 @@ app.post('/', async (req, res) => {
         } catch (e) {
             console.error(e);
             res.status(400).send();
-            returnl
+            return;
         }
     } else {
         console.error(`error: pub/sub message didn't contain bucket and file name`);

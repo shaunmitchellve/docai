@@ -324,7 +324,7 @@ async function processDocument(bucketName, file) {
                     });
                 });
 
-                reject(`Error saving lap document data: ${errors}`);
+                reject(`Error saving doc scopped document data: ${errors}`);
             }
         }
 
