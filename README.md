@@ -8,7 +8,7 @@ to capture the correct data for a specific example document.
 
 See setup.sh for more pre-conditions and setup paramaters needed.
 
-The second program (pdfConvert) will take in a PDF document from a Google Cloud Storage bucjet  (using a pub/sub subscription on object creation) and convert that PDF
+The second program (pdfConvert) will take in a PDF document from a Google Cloud Storage bucket  (using a pub/sub subscription on object creation) and convert that PDF
 to a JPEG so that it can be used in an AutoML Vision Object detection training pipeline.
 
 See setup.sh for more pre-conditions and setup paramaters needed.
