@@ -1,10 +1,10 @@
-'use strict'
+'use strict';
 
-import { v4 as uuid } from 'uuid';
+import {v4 as uuid} from 'uuid';
 import DocInterface from './DocInterface.mjs';
 
 /**
- * 
+ * Example document class extenstion
  */
 class LapDoc extends DocInterface {
     docRecord = {

@@ -14,5 +14,9 @@
   },
   "scripts": {
     "start": "node src/index.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^7.30.0",
+    "eslint-config-google": "^0.14.0"
   }
 }

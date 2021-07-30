@@ -1,8 +1,11 @@
+'use strict';
+
 /**
- * Seperated the file processor and the endpoint traffic management for greater flexibility
+ * Seperated the file processor and the endpoint traffic management for
+ * greater flexibility
  */
 import processDocument from './doc_ai.mjs';
-import express, { json } from 'express';
+import express, {json} from 'express';
 const app = express();
 
 const PORT = process.env.PORT || 8080;
@@ -11,16 +14,17 @@ app.use(json());
 
 app.post('/', async (req, res) => {
     /**
-     * Let's make sure that the message coming in is in the correct pub/sub message format.
+     * Let's make sure that the message coming in is in the correct
+     * pub/sub message format.
      */
-    if(!req.body) {
+    if (!req.body) {
         const msg = 'no Pub/Sub message received';
         console.error(`error: ${msg}`);
         res.status(400).send(`Bad Request: ${msg}`);
         return;
     }
 
-    if(!req.body.message) {
+    if (!req.body.message) {
         const msg = 'invalid Pub/Sub message format';
         console.error(`error: ${msg}`);
         res.status(400).send(`Bad Request: ${msg}`);
@@ -28,13 +32,10 @@ app.post('/', async (req, res) => {
     }
 
     const pubSubMessage = req.body.message;
-    /**
-     * @todo Add validation that only the object create event is being processed, delete events should be ignored
-     */
     const data = pubSubMessage.data ? JSON.parse(Buffer.from(pubSubMessage.data, 'base64').toString().trim()) : '';
 
-    if(data.bucket && data.name) {
-        try{
+    if (data.bucket && data.name) {
+        try {
             const results = await processDocument(data.bucket, data.name);
             console.log(results);
             res.status(204).send();
@@ -49,9 +50,8 @@ app.post('/', async (req, res) => {
         res.status(400).send('Bad Request in pub/sub message');
         return;
     }
-    
 });
 
-app.listen(PORT, () =>
-    console.log(`DocAI process listening on port ${PORT}`)
-);
+app.listen(PORT, () => {
+    console.log(`DocAI process listening on port ${PORT}`);
+});

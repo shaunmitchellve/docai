@@ -8,7 +8,7 @@ export PS_TOPIC=<PUB_SUB_TOPIC_NAME>
 export BUCKET_NAME=<STORAGE_BUCKET_NAME>
 export ARTIFACT_NAME=<ARTIFACT_REPO_NAME> #This needs to be created first as the setup.sh file doesn't set the artifact repo
 export DATASET=<BQ_DATASETNAME> #This needs to be created first as the setup.sh file doesn't create the BigQuery dataset
-export TABLE=<BQ_TABLENAME>
+export TABLE=document_entities # Table name right now is hard-coded
 export PROCESSOR_ID=<DOC_AI_PROCESSOR_ID> # This needs to be created first as setup.sh file doesn't create the processor you want
 
 deploy() {
