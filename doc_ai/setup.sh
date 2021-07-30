@@ -10,6 +10,7 @@ export ARTIFACT_NAME=<ARTIFACT_REPO_NAME> #This needs to be created first as the
 export DATASET=<BQ_DATASETNAME> #This needs to be created first as the setup.sh file doesn't create the BigQuery dataset
 export TABLE=document_entities # Table name right now is hard-coded
 export PROCESSOR_ID=<DOC_AI_PROCESSOR_ID> # This needs to be created first as setup.sh file doesn't create the processor you want
+export CLOUD_RUN_ENDPOINT_URL=<CLOUD_RUN_ENDPOINT_URL>
 
 deploy() {
     # Create a build pipeline using the cloudbuild.yaml spec
@@ -44,7 +45,7 @@ start_setup() {
     # Create a subscription for the topic and that will nootify the cloud run endpooint
     # When you push your first revision of the cloud run server, it will give you an endpoint URL, copy that into this command.
     gcloud pubsub subscriptions create fileProcessorSub --topic $PS_TOPIC \
-    --push-endpoint=CLOUD_RUN_ENDPOINT_URL \
+    --push-endpoint=$CLOUD_RUN_ENDPOINT_URL \
     --push-auth-service-account=cloud-run-pubsub-invoker@$PROJECT_ID.iam.gserviceaccount.com
 }
 
