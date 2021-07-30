@@ -6,6 +6,10 @@ and send the documents contents (PDF) to a Document AI form processor. The retur
 There is also a hook example for saving the same processed results into a table structure that directly matchs the document contents. It will use different methodolgies
 to capture the correct data for a specific example document.
 
+NOTE: You will need to run ./setup.sh -b first to deploy the program to Cloud Run. Once the deployment is complete then you need to copy the Cloud Run endpoint into the environment variable and run ./setup.sh -s
+
+Also make sure to enable the Cloud Run Service account permissions on the Cloud Build page or you will get permissions errors on your Cloud Build pipeline
+
 See setup.sh for more pre-conditions and setup paramaters needed.
 
 The second program (pdfConvert) will take in a PDF document from a Google Cloud Storage bucket  (using a pub/sub subscription on object creation) and convert that PDF
