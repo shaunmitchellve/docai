@@ -1,0 +1,14 @@
+{
+  "name": "docai-setup",
+  "version": "1.0.0",
+  "description": "Script to setup Document AI using the v1beta3 API",
+  "main": "DocAi-Setup.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Shaun Mitchell <shaunmitchell@google.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/documentai": "^3.0.2"
+  }
+}
