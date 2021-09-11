@@ -1,34 +1,36 @@
 # Document AI Demo
 
-This repository contains 2 programs, one (doc_ai) will process a document from a Google Cloud Storage bucket (using a pub/sub subscription on object creation)
-and send the documents contents (PDF) to a Document AI form processor. The returning JSON is then parsed and saved in a generic BigQuery table.
+The Document AI Demo is a simple use-case of uploading a document into a Google Cloud Storage bucket
+that will then be processed using a form processor to capture the documents key/value pairs then save them into a generic BigQuery table and a
+table that matches the demo document.
 
-There is also a hook example for saving the same processed results into a table structure that directly matchs the document contents. It will use different methodolgies
-to capture the correct data for a specific example document.
+If you don't wish to use the demo document specific table and code then make the following changes before applying the demo:
+- In bigquery.tf, comment out the second table definition "lartp_docs"
+- In the fileprocessorserivce/src/main/doc_ai.mjs comment out and uncomment the lines near the top. Look for the @TODO comments.
 
-See setup.sh for more pre-conditions and setup paramaters needed.
-
-The second program (pdfConvert) will take in a PDF document from a Google Cloud Storage bucket  (using a pub/sub subscription on object creation) and convert that PDF
-to a JPEG so that it can be used in an AutoML Vision Object detection training pipeline.
-
-See setup.sh for more pre-conditions and setup paramaters needed.
+You can extend this demo and load in your custom document object.
 
 ## Products
 
 - [Document AI](https://cloud.google.com/document-ai)
 - [Cloud Storage](https://cloud.google.com/storage)
 - [Cloud Pub / Sub](https://cloud.google.com/pubsub)
-- [Vertex AI: AutoML Vision Object Detection](https://cloud.google.com/vision/automl/object-detection/docs)
 - [Cloud Run](https://cloud.google.com/run)
 - [Cloud Build](https://cloud.google.com/build)
 
+## Notes
+
+The file processor service is built using an updated version of Node that does not come default with Cloud Shell. To upgrade Node in Cloud Shell
+run: `nvm install 14.17.6`
+
 ## Deploy Process
 
-In each programs folder there is a setup.sh file. Update the environment variables to match your GCP environment. (Note: After initial clone you will need to: chmod +x setup.sh to make the file executable)
+`terraform init`
 
-NOTE: You will need to run ./setup.sh -b first to deploy the program to Cloud Run. Once the deployment is complete then you need to copy the Cloud Run endpoint into the environment variable and run ./setup.sh -s
+`terraform apply`
 
-Also make sure to enable the Cloud Run Service account permissions on the Cloud Build page or you will get permissions errors on your Cloud Build pipeline
+Take the outputs from the above to replace the substitutions with the matching values
+`gcloud builds submit --substitutions=_DATASET="${DATASET}",_REGION="${REGION}",_ARTIFACT_NAME="${ARTIFACT_NAME}",_PROCESSOR_ID="${PROCESSOR_ID}"`
 
 ## Updates
 

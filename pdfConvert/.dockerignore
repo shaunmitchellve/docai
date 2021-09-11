@@ -1,6 +1,0 @@
-cloudbuild.yaml
-local_setup.sh
-setup.sh
-node_modules/*
-keyfile.js
-test/*
