@@ -13,10 +13,12 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "start": "node src/index.mjs"
+    "start": "node src/main/index.mjs",
+    "lint": "eslint src/main/*"
   },
   "devDependencies": {
-    "eslint": "^7.30.0",
+    "@babel/eslint-parser": "^7.15.4",
+    "eslint": "^7.32.0",
     "eslint-config-google": "^0.14.0"
   }
 }

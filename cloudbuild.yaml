@@ -4,19 +4,19 @@ steps:
   args:
   - build
   - -t
-  - us-west1-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/file-processor
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/file-processor
   - --build-arg
   - dataset=${_DATASET}
   - --build-arg
   - processorId=${_PROCESSOR_ID}
   - --build-arg
   - projectId=$PROJECT_ID
-  - .
+  - src/fileprocessorservice
 - name: 'gcr.io/cloud-builders/docker'
   id: push
   args:
   - push
-  - us-west1-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/file-processor
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/file-processor
   waitFor:
     - build
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -26,7 +26,7 @@ steps:
   - deploy
   - document-processor
   - --image
-  - us-west1-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/file-processor
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/file-processor
   - --region
   - ${_REGION}
   waitFor:
