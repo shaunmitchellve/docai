@@ -1,4 +1,8 @@
-project_name="doc-ai-demo"
-parent="organizations/1080375521647"
-billing_account="016413-861A8B-BADBD5"
-storage_bucket_name="doc-ai-forms-testing"
+# -------------------------------------------------------------------------
+# DEVELOPER TODO: Update the following variables to match your environment
+# Remember that a storageb bucket name must be globally unique
+# -------------------------------------------------------------------------
+project_name=""
+parent=""
+billing_account=""
+storage_bucket_name=""
