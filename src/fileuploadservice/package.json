@@ -1,0 +1,17 @@
+{
+  "name": "fileuploadservice",
+  "version": "1.0.0",
+  "description": "File Upload Microservice",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/main/index.mjs"
+  },
+  "author": "Shaun Mitchell <shaunmitchell@google.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/storage": "^5.14.2",
+    "cors": "^2.8.5",
+    "express": "^4.17.1"
+  }
+}
