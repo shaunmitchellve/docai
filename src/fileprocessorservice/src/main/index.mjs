@@ -53,5 +53,5 @@ app.post('/', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`DocAI process listening on port ${PORT}`);
+    console.log(`File Processor Service listening on port ${PORT}`);
 });
