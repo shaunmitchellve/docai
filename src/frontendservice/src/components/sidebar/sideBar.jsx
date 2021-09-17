@@ -6,9 +6,12 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
+import { green } from '@material-ui/core/colors';
+import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 
 import { makeStyles } from '@material-ui/core/styles';
+import { CircularProgress } from '@material-ui/core';
 
 const drawerWidth = 150
 
@@ -31,17 +34,62 @@ const useStyles = makeStyles( (theme) => ({
     },
     button: {
         margin: theme.spacing(1),
-    }
+    },
+    buttonProgress: {
+        color: green[500],
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginTop: -12,
+        marginLeft: -12,
+      }
 }));
 
-const onFileUpload = event => {
-    const data = new FormData();
-    data.append('file', event.target.files[0]);
-    axios.post('https://127.0.0.1:3005/upload', data).then( res => { console.log(res); }).catch( error => {console.error(error)});
+const checkFileSize = event =>{
+    let file = event.target.files[0];
+    let size = 5242880;
+    if (file.size > size) {
+        return false;
+    }
+
+    return true;
 }
 
-const SideBar = ({ open }) => {
+const SideBar = (props) => {
     const classes = useStyles();
+    const [loading, setLoading] = React.useState(false);
+    const { open, snackHandle } = props;
+    const history = useHistory();
+
+
+    const handleButtonClick = () => {
+        if (!loading) {
+            setLoading(true);
+        }
+    };
+
+    const onFileUpload = event => {
+        if(checkFileSize(event)) {
+            const data = new FormData();
+
+            data.append('file', event.target.files[0]);
+            axios.post('http://localhost:8080/upload', data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            }).then( res => { 
+                setLoading(false);
+                snackHandle('success', 'Upload Successful');
+
+                history.push('/view', {
+                    fileUrl: res.data
+                })
+            }).catch( error => {console.error(error)});
+        } else {
+            setLoading(false);
+            snackHandle('error', 'File is to lage. Max 5MB');
+        }
+    }
 
     return (
         <div className={classes.root}>
@@ -65,10 +113,11 @@ const SideBar = ({ open }) => {
                             onChange={onFileUpload}
                         />
                         <label htmlFor="uploaded_doc">
-                        <ListItem button>
+                        <ListItem button onClick={handleButtonClick} disabled={loading}>
                            <ListItemIcon><CloudUploadIcon /></ListItemIcon>
                            <ListItemText primary="Upload" />
                         </ListItem>
+                        {loading && <CircularProgress size={24} className={classes.buttonProgress} />}
                         </label>
                    </List>
                    </form>

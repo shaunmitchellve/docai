@@ -1,31 +1,43 @@
 'use strict'
 
-import {Storage} from '@google-cloud/storage';
 import express, {json} from 'express';
 import cors from 'cors';
-import https from 'https';
-import fs from 'fs';
+import multer from 'multer';
+import uploadFile from './uploadFile.mjs';
 
-const storage = new Storage();
-const bucket = storage.bucket(process.env.BUCKETNAME);
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+    }
+});
+
 const app = express();
-
-const key = fs.readFileSync('./src/key.pem');
-const cert = fs.readFileSync('./src/cert.pem');
-
-const server = https.createServer({key: key, cert: cert}, app);
 
 const PORT = process.env.PORT || 8080;
 
+app.disable('x-powered-by');
+app.use(upload.single('file'));
+app.use(express.json());
+app.use(express.urlencoded({extended: false}));
 app.use(json());
 app.use(cors());
 
-app.get('/upload', async (req, res) => {
-    console.log(req.file);
-    res.status(200).send('gotit');
+app.post('/upload', async (req, res) => {
+    res.status(200).send(`{"url": "https://storage.cloud.google.com/doc-ai-forms-testing/lap_12.pdf"}`);
+    return;
+    const fileUrl = await uploadFile(req.file)
+    .then( (url) => {
+        res.status(200).send(`{url: ${url}}`);
+    })
+    .catch( (err) => {
+        const message = err.errors[0].message;
+        console.error(message);
+        res.status(err.code).send(message);
+    });
+    
 });
 
-//server.listen(PORT, () => {
 app.listen(PORT, () => {
     console.log(`File Upload Service listeing on ${PORT}`);
 });
