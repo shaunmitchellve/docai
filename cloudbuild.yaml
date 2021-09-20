@@ -1,33 +1,58 @@
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  id: build
+- id: build-convertpdfservice
+  name: 'gcr.io/cloud-builders/docker'
   args:
-  - build
-  - -t
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/file-processor
-  - --build-arg
-  - dataset=${_DATASET}
-  - --build-arg
-  - processorId=${_PROCESSOR_ID}
-  - --build-arg
-  - projectId=$PROJECT_ID
-  - src/fileprocessorservice
-- name: 'gcr.io/cloud-builders/docker'
-  id: push
+    - build
+    - -t
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_CONVERT_SERVICE}
+    - src/convertpdf
+  waitFor: ['-']
+
+- id: push-convertservice
+  name: 'gcr.io/cloud-builders/docker'
   args:
   - push
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/file-processor
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}
   waitFor:
-    - build
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    - build-convertpdfservice
+
+- id: run-convertservice
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
-  args:
-  - run
-  - deploy
-  - document-processor
-  - --image
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/file-processor
-  - --region
-  - ${_REGION}
+  args: ['run', 'deploy', '${_CONVERT_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}', '--region', '${_REGION}',
+  '--platform', 'managed', '--service-account', 'pdfconvert-service@doc-ai-demo-b66e.iam.gserviceaccount.com', '--no-allow-unauthenticated']
   waitFor:
-    - push
+    - push-convertservice
+
+- id: get-runserviceurl
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: bash
+  args:
+  - '-c'
+  - |
+    gcloud run services list --platform managed | awk 'NR==2 {print $4}' > /workspace/convert-service-url.txt
+
+- id: build-processorservice
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_PROCESSOR_SERVICE}', '--build-arg', 'dataset=${_DATASET}',
+    '--build-arg', 'processorId=${_PROCESSOR_ID}', '--build-arg', 'projectId=$PROJECT_ID', '--build-arg', 'convertservice=$(cat /workspace/convert-service-url.txt)',
+    '--cache-from', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}:latest', 'src/fileprocessorservice']
+
+- id: push-processorservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+  - push
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_PROCESSOR_SERVICE}
+  waitFor:
+    - build-processorservice
+
+- id: run-processorservice
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', '${_PROCESSOR_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_PROCESSOR_SERVICE}', '--region', '${_REGION}',
+  '--service-account', 'fileprocessor-service@doc-ai-demo-b66e.iam.gserviceaccount.com', '--platform', 'managed', '--no-allow-unauthenticated']
+  waitFor:
+    - push-processorservice
+substitutions:
+  _CONVERT_SERVICE: 'convert-pdf'
+  _PROCESSOR_SERVICE: 'document-processor'

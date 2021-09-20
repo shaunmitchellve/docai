@@ -1,25 +1,23 @@
 {
-  "name": "fileuploadservice",
+  "name": "convertpdf",
   "version": "1.0.0",
-  "description": "File Upload Microservice",
-  "main": "index.js",
+  "description": "API for converting large PDFs into smaller PDFs",
+  "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/main/index.mjs",
     "lint": "eslint src/main/*"
   },
   "author": "Shaun Mitchell <shaunmitchell@google.com>",
-  "license": "MIT",
+  "license": "ISC",
   "dependencies": {
-    "@google-cloud/storage": "^5.14.2",
-    "cors": "^2.8.5",
     "express": "^4.17.1",
-    "multer": "^1.4.3"
+    "pdf-lib": "^1.16.0"
   },
   "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-google": "^0.14.0",
     "@babel/core": "^7.15.5",
-    "@babel/eslint-parser": "^7.15.7"
+    "@babel/eslint-parser": "^7.15.7",
+    "eslint": "^7.32.0",
+    "eslint-config-google": "^0.14.0"
   }
 }

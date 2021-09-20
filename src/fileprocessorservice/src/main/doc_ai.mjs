@@ -11,9 +11,11 @@ const dataset = process.env.DATASET;
 
 import {BigQuery} from '@google-cloud/bigquery';
 import {v1} from '@google-cloud/documentai';
-const {DocumentProcessorServiceClient} = v1;
 import {Storage} from '@google-cloud/storage';
 import {v4 as uuid} from 'uuid';
+import axios from 'axios';
+
+const {DocumentProcessorServiceClient} = v1;
 const client = new DocumentProcessorServiceClient();
 const storage = new Storage();
 
@@ -21,10 +23,10 @@ const storage = new Storage();
  * @TODO If you don't wish to use the demo document then comment out these below 2 and
  * uncomment the lines after
  */
-import DocScope from './lap.mjs';
-const docscope = new DocScope();
-// import DocScope from './blankDocScope.mjs';
-// const docscope = new DefaultDocScope();
+// import DocScope from './lap.mjs';
+// const docscope = new DocScope();
+import DefaultDocScope from './blankDocScope.mjs';
+const docscope = new DefaultDocScope();
 
 /**
  * A simple prototype to do a comparison of two integer ranges. This is used
@@ -86,16 +88,33 @@ async function processDocument(bucketName, file) {
     const name = `projects/${projectID}/locations/us/processors/${processorID}`;
 
     /**
+     * Document processed text in order to pull coordinates from
+     */
+    let text;
+
+    /**
      * A helpfer function to read a files contents from GCS and return a base64 encoded version.
      *
      * @param {object} gcs An object that has two values. bucketName and file.
-     * @return {Promise} Returns a base64 string of the files contents
+     * @return {Promise} Returns an object containg a base64 string of the files contents and the contentType of the document
      */
     const readFile = (gcs) => {
+        const file = storage.bucket(gcs.bucketName).file(gcs.file);
+
         return new Promise( (res, rej) => {
-            storage.bucket(gcs.bucketName).file(gcs.file).download( (err, contents) => {
-                if (err) rej(err);
-                res(contents.toString('base64'));
+            file.exists().then( () => {
+                file.download( (err, contents) => {
+                    if (err) rej(err);
+
+                    file.getMetadata().then( (mdata) => {
+                        const contentType = mdata[0].contentType;
+                        res( {content: contents.toString('base64'), contentType: contentType} );
+                    }).catch( (err) => {
+                        rej(err);
+                    });
+                });
+            }).catch( (err) => {
+                rej(err);
             });
         });
     };
@@ -103,17 +122,11 @@ async function processDocument(bucketName, file) {
     /**
      * A helper function that will return just the text value for element using it's start and end index.
      *
-     * @param {object} textAnchor The textAnchor object from the document AI API return.
+     * @param {int} startIndex The starting index to pull text from
+     * @param {int} endIndex The ending index to pull text from
      * @return {string} The text value of the textAnchor
      */
-    const getText = (textAnchor) => {
-        if (!textAnchor || !textAnchor.textSegments || textAnchor.textSegments.length === 0) {
-            return '';
-        }
-
-        const startIndex = textAnchor.textSegments[0].startIndex || 0;
-        const endIndex = textAnchor.textSegments[0].endIndex;
-
+    const getText = (startIndex, endIndex) => {
         return text.substring(startIndex, endIndex).replace(/\r?\n|\r/g, '').trim();
     };
 
@@ -135,7 +148,7 @@ async function processDocument(bucketName, file) {
             const pgEnd = parseInt(pg.layout.textAnchor.textSegments[0].endIndex);
 
             if (startIndex.between(pgStart, pgEnd) && endIndex.between(pgStart, pgEnd)) {
-                return getText(pg.layout.textAnchor);
+                return getText(pgStart, pgEnd);
             }
         }
     };
@@ -169,7 +182,7 @@ async function processDocument(bucketName, file) {
         }
 
         return {
-            entity: getText(entityData.textAnchor),
+            entity: getText(entityStartIndex, entityEndIndex),
             entityConf: entityData.confidence.toFixed(4),
             entityStartIndex: entityStartIndex,
             entityEndIndex: entityEndIndex,
@@ -180,169 +193,182 @@ async function processDocument(bucketName, file) {
     /**
      * Read the file from GCS storage using our helper function
      */
-    const encodedImage = await readFile({bucketName, file});
+    const parentData = await readFile({bucketName, file});
+    const fileArray = [];
 
     /**
-     * Create the API request object. This is hard coded to be a PDF file for this demo
+     * If this is a PDF file, then convert the PDF file into indivdual pages
+     * by calling the convert service /cutPages endpoint.
      */
-    const request = {
-        name,
-        rawDocument: {
-            content: encodedImage,
-            mimeType: 'application/pdf',
-        },
-    };
+    if (parentData.contentType === 'application/pdf') {
+        const res = await axios.post(`${process.env.CONVERTSERVICE}/cutPages`, {
+            file: {
+                name: file,
+                content: parentData.content,
+            },
+        });
+
+        res.data.forEach( (pdfFile) => {
+            pdfFile.contentType = 'application/pdf';
+            fileArray.push(pdfFile);
+        });
+    } else {
+        fileArray.push(parentData);
+    }
 
     /**
-     * Call and process the response from Document AI API
+     * Process the array of documents / pages.
      */
-    const [result] = await client.processDocument(request);
-    const {document} = result;
-    const {text} = document;
-    console.log('Document Processed by DocAI');
-
-    /**
-     * DEBUG - Write API results to a file
-     */
-    /*
-    const fs = require('fs');
-    fs.writeFile('./api_results.json', JSON.stringify(document, null, ' '), (err) => {});
-    return;
-    */
-
-    /**
-     * Start creating the objec that will store our values that need to be saved
-     * into BigQuery
-     */
-    const docData = {
-        doc_id: uuid(),
-        name: file,
-        num_pages: document.pages.length,
-        mimeType: document.mimeType,
-        text: document.text,
-    };
-
-    /**
-     * Create an array that will now store all the table and form field entities to be saved into BigQuery
-     */
-    let documentEntities = [];
-    docData.page = [];
-
-    /**
-     * Assuming there is pages to be processed
-     */
-    for (const page of document.pages) {
+    fileArray.forEach( async (fileData) => {
         /**
-         * Test to make sure there are tables in the page then processes the tables on the page.
-         * NOTE: The headerRows return for the test demo form was capturing incorrectly so this code
-         * is hardcoded to assume the first row is the actual table header
+         * Create the API request object. This is hard coded to be a PDF file for this demo
          */
-        if (page.tables && page.tables.length > 0) {
-            console.log('Table found in Document, processing...');
+        const request = {
+            name,
+            rawDocument: {
+                content: fileData.content,
+                mimeType: fileData.contentType,
+            },
+        };
 
-            const table = page.tables[0];
+        /**
+         * Call and process the response from Document AI API
+         */
+        let document;
 
-            for (let i = 1; i < table.bodyRows.length; i++) {
-                for (let c = 0; c < table.bodyRows[i].cells.length; c++) {
-                    const tableHeaderRecord = entityDataRecord(table.bodyRows[0].cells[c].layout, page.dimension);
-                    const tableRecord = entityDataRecord(table.bodyRows[i].cells[c].layout, page.dimension);
+        try {
+            const [result] = await client.processDocument(request);
+            document = result.document;
+            text = document.text;
+            console.log('Document Processed by DocAI');
+        } catch ( err ) {
+            throw new Error(err);
+        }
+        /**
+         * DEBUG - Write API results to a file
+         */
+        /*
+        const fs = require('fs');
+        fs.writeFile('./api_results.json', JSON.stringify(document, null, ' '), (err) => {});
+        return;
+        */
 
-                    docscope.addEntity(tableHeaderRecord, tableRecord, 'table');
+        /**
+         * Start creating the objec that will store our values that need to be saved
+         * into BigQuery
+         */
+        const docData = {
+            doc_id: uuid(),
+            name: file,
+            num_pages: document.pages.length,
+            mimeType: document.mimeType,
+            text: document.text,
+        };
 
-                    documentEntities.push(
-                        {
-                            entity_name: tableHeaderRecord.entity,
-                            entity_value: tableRecord.entity,
-                            value_type: 'table',
-                            entity_name_confidence: tableHeaderRecord.entityConf,
-                            entity_value_confidence: tableRecord.entityConf,
-                            entity_name_start_index: tableHeaderRecord.entityStartIndex,
-                            entity_name_end_index: tableHeaderRecord.entityEndIndex,
-                            entity_value_start_index: tableRecord.entityStartIndex,
-                            entity_value_end_index: tableRecord.entityEndIndex,
-                            vertices: tableRecord.entityVertices,
-                        });
+        /**
+         * Create an array that will now store all the table and form field entities to be saved into BigQuery
+         */
+        let documentEntities = [];
+        docData.page = [];
+
+        /**
+         * Assuming there is pages to be processed
+         */
+        for (const page of document.pages) {
+            /**
+             * Test to make sure there are tables in the page then processes the tables on the page.
+             */
+            if (page.tables && page.tables.length > 0) {
+                console.log('Table found in Document, processing...');
+
+                const table = page.tables[0];
+
+                for (let i = 1; i < table.bodyRows.length; i++) {
+                    for (let c = 0; c < table.bodyRows[i].cells.length; c++) {
+                        const tableHeaderRecord = entityDataRecord(table.headerRows[0].cells[c].layout, page.dimension);
+                        const tableRecord = entityDataRecord(table.bodyRows[i].cells[c].layout, page.dimension);
+
+                        docscope.addEntity(tableHeaderRecord, tableRecord, 'table');
+
+                        documentEntities.push(
+                            {
+                                entity_name: tableHeaderRecord.entity,
+                                entity_value: tableRecord.entity,
+                                value_type: 'table',
+                                entity_name_confidence: tableHeaderRecord.entityConf,
+                                entity_value_confidence: tableRecord.entityConf,
+                                entity_name_start_index: tableHeaderRecord.entityStartIndex,
+                                entity_name_end_index: tableHeaderRecord.entityEndIndex,
+                                entity_value_start_index: tableRecord.entityStartIndex,
+                                entity_value_end_index: tableRecord.entityEndIndex,
+                                vertices: tableRecord.entityVertices,
+                            });
+                    }
                 }
+            }
+
+            /**
+             * Start processing the form fields from the form processor. This return object won't
+             * exist if using a generic document processor.
+             */
+            const {formFields, paragraphs} = page;
+
+            for (const field of formFields) {
+                const fieldNameRecord = entityDataRecord(field.fieldName, page.dimension);
+                const fieldValueRecord = entityDataRecord(field.fieldValue, page.dimension);
+                const question =
+                    (field.valueType === 'filled_checkbox') ?
+                        getParagraph(field.fieldName.textAnchor.textSegments, paragraphs) : '';
+
+                docscope.addEntity(fieldNameRecord, fieldValueRecord, field.valueType);
+
+                documentEntities.push(
+                    {
+                        entity_name: fieldNameRecord.entity,
+                        entity_value: fieldValueRecord.entity,
+                        entity_name_confidence: fieldNameRecord.entityConf,
+                        entity_value_confidence: fieldValueRecord.entityConf,
+                        entity_name_start_index: fieldNameRecord.entityStartIndex,
+                        entity_name_end_index: fieldNameRecord.entityEndIndex,
+                        entity_value_start_index: fieldValueRecord.entityStartIndex,
+                        entity_value_end_index: fieldValueRecord.entityEndIndex,
+                        vertices: fieldNameRecord.entityVertices,
+                        value_type: field.valueType,
+                        paragraph_text: question,
+                    });
+            }
+
+            /**
+             * Add the newly gathers tables and formFields to the object for saving into BigQuery
+             */
+            if (documentEntities.length > 0) {
+                docData.page.push(
+                    {
+                        page_num: page.pageNumber,
+                        page_width: page.dimension.width,
+                        page_height: page.dimension.height,
+                        page_dimension_unit: page.dimension.unit,
+                        entities: documentEntities,
+                    },
+                );
+
+                /**
+                 * Re-set the object for the next page
+                 */
+                documentEntities = [];
             }
         }
 
-        /**
-         * Start processing the form fields from the form processor. This return object won't
-         * exist if using a generic document processor.
-         */
-        const {formFields, paragraphs} = page;
-
-        for (const field of formFields) {
-            const fieldNameRecord = entityDataRecord(field.fieldName, page.dimension);
-            const fieldValueRecord = entityDataRecord(field.fieldValue, page.dimension);
-            const question =
-                (field.valueType === 'filled_checkbox') ?
-                    getParagraph(field.fieldName.textAnchor.textSegments, paragraphs) : '';
-
-            docscope.addEntity(fieldNameRecord, fieldValueRecord, field.valueType);
-
-            documentEntities.push(
-                {
-                    entity_name: fieldNameRecord.entity,
-                    entity_value: fieldValueRecord.entity,
-                    entity_name_confidence: fieldNameRecord.entityConf,
-                    entity_value_confidence: fieldValueRecord.entityConf,
-                    entity_name_start_index: fieldNameRecord.entityStartIndex,
-                    entity_name_end_index: fieldNameRecord.entityEndIndex,
-                    entity_value_start_index: fieldValueRecord.entityStartIndex,
-                    entity_value_end_index: fieldValueRecord.entityEndIndex,
-                    vertices: fieldNameRecord.entityVertices,
-                    value_type: field.valueType,
-                    paragraph_text: question,
-                });
-        }
+        console.log('Processing Complete.');
 
         /**
-         * Add the newly gathers tables and formFields to the object for saving into BigQuery
+         * Assuming we processed something in the document ai response, save the data to BigQuery
          */
-        if (documentEntities.length > 0) {
-            docData.page.push(
-                {
-                    page_num: page.pageNumber,
-                    page_width: page.dimension.width,
-                    page_height: page.dimension.height,
-                    page_dimension_unit: page.dimension.unit,
-                    entities: documentEntities,
-                },
-            );
-
-            /**
-             * Re-set the object for the next page
-             */
-            documentEntities = [];
-        }
-    }
-
-    console.log('Processing Complete.');
-
-    /**
-     * Assuming we processed something in the document ai response, save the data to BigQuery
-     */
-    if (docData.page.length > 0) {
-        try {
-            await saveData('document_entities', docData);
-        } catch (e) {
-            const errors = [];
-            e.forEach( (err) => {
-                err.errors.forEach( (error) => {
-                    errors.push(`Column: ${error.location} - ${error.message}`);
-                });
-            });
-
-            throw new Error(`Error saving document data to BigQuery: ${errors}`);
-        }
-    }
-
-    if (docscope.docFound) {
-        try {
-            await saveData(docscope.docTable, docscope.doc);
-        } catch (e) {
-            if (typeof e !== 'object') {
+        if (docData.page.length > 0) {
+            try {
+                await saveData('document_entities', docData);
+            } catch (e) {
+                console.log(e);
                 const errors = [];
                 e.forEach( (err) => {
                     err.errors.forEach( (error) => {
@@ -350,14 +376,31 @@ async function processDocument(bucketName, file) {
                     });
                 });
 
-                throw new Error(`Error saving doc scopped document data: ${errors}`);
-            } else {
-                throw new Error(e.errors[0].message);
+                throw new Error(`Error saving document data to BigQuery: ${errors}`);
             }
         }
-    }
 
-    return 'Document processed';
+        if (docscope.docFound) {
+            try {
+                await saveData(docscope.docTable, docscope.doc);
+            } catch (e) {
+                if (typeof e !== 'object') {
+                    const errors = [];
+                    e.forEach( (err) => {
+                        err.errors.forEach( (error) => {
+                            errors.push(`Column: ${error.location} - ${error.message}`);
+                        });
+                    });
+
+                    throw new Error(`Error saving doc scopped document data: ${errors}`);
+                } else {
+                    throw new Error(e.errors[0].message);
+                }
+            }
+        }
+
+        return 'Document processed';
+    });
 }
 
 export default processDocument;

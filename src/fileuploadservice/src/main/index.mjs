@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 import express, {json} from 'express';
 import cors from 'cors';
@@ -9,7 +9,7 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: 5 * 1024 * 1024,
-    }
+    },
 });
 
 const app = express();
@@ -24,18 +24,13 @@ app.use(json());
 app.use(cors());
 
 app.post('/upload', async (req, res) => {
-    res.status(200).send(`{"url": "https://storage.cloud.google.com/doc-ai-forms-testing/lap_12.pdf"}`);
-    return;
-    const fileUrl = await uploadFile(req.file)
-    .then( (url) => {
+    await uploadFile(req.file).then( (url) => {
         res.status(200).send(`{url: ${url}}`);
-    })
-    .catch( (err) => {
+    }).catch( (err) => {
         const message = err.errors[0].message;
         console.error(message);
         res.status(err.code).send(message);
     });
-    
 });
 
 app.listen(PORT, () => {
