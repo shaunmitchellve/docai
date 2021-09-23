@@ -25,7 +25,7 @@ app.use(cors());
 
 app.post('/upload', async (req, res) => {
     await uploadFile(req.file).then( (url) => {
-        res.status(200).send(`{url: ${url}}`);
+        res.status(200).send(`${url}`);
     }).catch( (err) => {
         const message = err.errors[0].message;
         console.error(message);

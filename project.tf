@@ -23,6 +23,10 @@ module "project" {
     ]
 }
 
+
+# ----------------------------------------------------------------
+# Default Service Account Role Assignments - START
+# ----------------------------------------------------------------
 resource "google_project_iam_binding" "cloud_build_run_admin" {
     project = "${module.project.project_id}"
     role = "roles/run.admin"
@@ -61,33 +65,13 @@ resource "google_project_iam_binding" "service-account-token-creator" {
       module.project
     ]
 }
+# ----------------------------------------------------------------
+# Default Service Account Role Assignments - END
+# ----------------------------------------------------------------
 
-resource "google_project_iam_binding" "default-compute-docai-apiuser" {
-    project = "${module.project.project_id}"
-    role = "roles/documentai.apiUser"
-
-    members = [
-        "serviceAccount:${module.project.project_number}-compute@developer.gserviceaccount.com"
-    ]
-
-    depends_on = [
-      module.project
-    ]
-}
-
-resource "google_project_iam_binding" "default-compute-bigquery-editor" {
-    project = "${module.project.project_id}"
-    role = "roles/bigquery.dataEditor"
-
-    members = [
-        "serviceAccount:${module.project.project_number}-compute@developer.gserviceaccount.com"
-    ]
-
-    depends_on = [
-      module.project
-    ]
-}
-
+# ----------------------------------------------------------------
+# Service Accounts Creation - START
+# ----------------------------------------------------------------
 resource "google_service_account" "cloud-run-pubsub-invoker" {
     project = "${module.project.project_id}"
     account_id = "cloud-run-pubsub-invoker"
@@ -96,3 +80,66 @@ resource "google_service_account" "cloud-run-pubsub-invoker" {
       module.project
     ]
 }
+
+resource "google_service_account" "fileprocessor-cloudrun" {
+    project = "${module.project.project_id}"
+    account_id = "fileprocessor-service"
+    display_name = "File Processor Service"
+    description = "Cloud Run SA for the file processor service"
+    depends_on = [
+      module.project
+    ]
+}
+
+resource "google_service_account" "pdfconvert-cloudrun" {
+    project = "${module.project.project_id}"
+    account_id = "pdfconvert-service"
+    display_name = "Convert PDF Service"
+    description = "Cloud Run SA for the PDF Convert Service"
+    depends_on = [
+      module.project
+    ]
+}
+
+resource "google_service_account" "upload-cloudrun" {
+    project = "${module.project.project_id}"
+    account_id = "upload-service"
+    display_name = "Upload Service"
+    description = "Cloud Run SA for the Upload Service"
+    depends_on = [
+      module.project
+    ]
+}
+
+resource "google_service_account" "frontend-cloudrun" {
+    project = "${module.project.project_id}"
+    account_id = "frontend-service"
+    display_name = "Front End Service"
+    description = "Cloud Run SA for the Front End Service"
+    depends_on = [
+      module.project
+    ]
+}
+# ----------------------------------------------------------------
+# Service Account Creation - End
+# ----------------------------------------------------------------
+
+# ----------------------------------------------------------------
+# Service Account Policy Bindings - START
+# ----------------------------------------------------------------
+resource "google_project_iam_binding" "fileprocessor-docai-apiuser" {
+    project = "${module.project.project_id}"
+    role = "roles/documentai.apiUser"
+
+    members = [
+        "serviceAccount:${google_service_account.fileprocessor-cloudrun.email}"
+    ]
+
+    depends_on = [
+      module.project,
+      google_service_account.fileprocessor-cloudrun
+    ]
+}
+# ----------------------------------------------------------------
+# Service Account Policy Bindings - END
+# ----------------------------------------------------------------

@@ -1,4 +1,7 @@
 steps:
+# ---------------------------------------------
+# Convert PDF Build / Deploy - START
+# ---------------------------------------------
 - id: build-convertpdfservice
   name: 'gcr.io/cloud-builders/docker'
   args:
@@ -6,43 +9,60 @@ steps:
     - -t
     - ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_CONVERT_SERVICE}
     - src/convertpdf
-  waitFor: ['-']
+  waitFor: ['-'] # Start immediately
 
 - id: push-convertservice
   name: 'gcr.io/cloud-builders/docker'
   args:
-  - push
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}
+    - push
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}
   waitFor:
     - build-convertpdfservice
 
 - id: run-convertservice
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
-  args: ['run', 'deploy', '${_CONVERT_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}', '--region', '${_REGION}',
-  '--platform', 'managed', '--service-account', 'pdfconvert-service@doc-ai-demo-b66e.iam.gserviceaccount.com', '--no-allow-unauthenticated']
+  args: ['run', 'deploy', '${_CONVERT_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}', '--region', '${_REGION}', 
+    '--platform', 'managed', '--service-account', 'pdfconvert-service@$PROJECT_ID.iam.gserviceaccount.com', '--no-allow-unauthenticated']
   waitFor:
     - push-convertservice
+# ---------------------------------------------
+# Convert PDF Build / Deploy - END
+# ---------------------------------------------
 
+# ---------------------------------------------
+# Get the Convert Service URL
+# ---------------------------------------------
 - id: get-runserviceurl
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: bash
   args:
-  - '-c'
-  - |
-    gcloud run services list --platform managed | awk 'NR==2 {print $4}' > /workspace/convert-service-url.txt
+    - '-c'
+    - |
+      gcloud run services list --platform managed | grep -Eo 'https://${_CONVERT_SERVICE}[a-zA-Z0-9.-]*' > /workspace/convert-service-url.txt
+  waitFor:
+    - push-convertservice
 
+# ---------------------------------------------
+# Doument Processor Build / Deploy - START
+# ---------------------------------------------
 - id: build-processorservice
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_PROCESSOR_SERVICE}', '--build-arg', 'dataset=${_DATASET}',
-    '--build-arg', 'processorId=${_PROCESSOR_ID}', '--build-arg', 'projectId=$PROJECT_ID', '--build-arg', 'convertservice=$(cat /workspace/convert-service-url.txt)',
-    '--cache-from', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}:latest', 'src/fileprocessorservice']
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: bash
+  args:
+    - '-c'
+    - |
+      docker build -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_PROCESSOR_SERVICE} --build-arg dataset=${_DATASET} --build-arg processorId=${_PROCESSOR_ID} \
+      --build-arg projectId=$PROJECT_ID --build-arg convertservice=$(cat /workspace/convert-service-url.txt) --cache-from \
+      ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}:latest src/fileprocessorservice
+  waitFor:
+    - push-convertservice
 
 - id: push-processorservice
   name: 'gcr.io/cloud-builders/docker'
   args:
-  - push
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_PROCESSOR_SERVICE}
+    - push
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_PROCESSOR_SERVICE}
   waitFor:
     - build-processorservice
 
@@ -50,9 +70,97 @@ steps:
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
   args: ['run', 'deploy', '${_PROCESSOR_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_PROCESSOR_SERVICE}', '--region', '${_REGION}',
-  '--service-account', 'fileprocessor-service@doc-ai-demo-b66e.iam.gserviceaccount.com', '--platform', 'managed', '--no-allow-unauthenticated']
+  '--service-account', 'fileprocessor-service@$PROJECT_ID.iam.gserviceaccount.com', '--platform', 'managed', '--no-allow-unauthenticated']
   waitFor:
     - push-processorservice
+# ---------------------------------------------
+# Convert PDF Build / Deploy - END
+# ---------------------------------------------
+
+# ---------------------------------------------
+# Upload Build / Deploy - START
+# ---------------------------------------------
+- id: build-uploadservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - build
+    - -t
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_UPLOAD_SERVICE}
+    - --build-arg
+    - bucketname=${_STORAGE_BUCKET}
+    - --cache-from
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}:latest
+    - src/fileuploadservice
+  waitFor:
+    - push-convertservice
+
+- id: push-uploadservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - push
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_UPLOAD_SERVICE}
+  waitFor:
+    - build-uploadservice
+
+- id: run-uploadservice
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', '${_UPLOAD_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_UPLOAD_SERVICE}', '--region', '${_REGION}', 
+    '--platform', 'managed', '--service-account', 'upload-service@$PROJECT_ID.iam.gserviceaccount.com', '--allow-unauthenticated']
+  waitFor:
+    - push-uploadservice
+# ---------------------------------------------
+# Upload Build / Deploy - END
+# ---------------------------------------------
+
+# ---------------------------------------------
+# Get the Upload Service URL
+# ---------------------------------------------
+- id: get-uploadserviceurl
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: bash
+  args:
+    - '-c'
+    - |
+      gcloud run services list --platform managed | grep -Eo 'https://${_UPLOAD_SERVICE}[a-zA-Z0-9.-]*' > /workspace/upload-service-url.txt
+  waitFor:
+    - run-uploadservice
+
+# ---------------------------------------------
+# Front End Build / Deploy - START
+# ---------------------------------------------
+- id: build-frontendservice
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: bash
+  args:
+    - '-c'
+    - |
+      docker build -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_FRONTEND_SERVICE} --build-arg uploadservice=$(cat /workspace/upload-service-url.txt) \
+      src/frontendservice
+  waitFor:
+    - get-uploadserviceurl
+    
+- id: push-frontendservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - push
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_FRONTEND_SERVICE}
+  waitFor:
+    - build-frontendservice
+
+- id: run-frontendservice
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', '${_FRONTEND_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_FRONTEND_SERVICE}', '--region', '${_REGION}', 
+    '--platform', 'managed', '--service-account', 'frontend-service@$PROJECT_ID.iam.gserviceaccount.com', '--allow-unauthenticated']
+  waitFor:
+    - push-frontendservice
+# ---------------------------------------------
+# Front End Build / Deploy - END
+# ---------------------------------------------
+
 substitutions:
-  _CONVERT_SERVICE: 'convert-pdf'
-  _PROCESSOR_SERVICE: 'document-processor'
+    _CONVERT_SERVICE: 'convert-pdf'
+    _PROCESSOR_SERVICE: 'document-processor'
+    _UPLOAD_SERVICE: 'upload'
+    _FRONTEND_SERVICE: 'frontend'

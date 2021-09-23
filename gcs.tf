@@ -19,11 +19,27 @@ resource "google_storage_bucket_iam_binding" "read_access" {
     role = "roles/storage.objectViewer"
 
     members = [
-        "serviceAccount:${module.project.project_number}-compute@developer.gserviceaccount.com"
+        "serviceAccount:${google_service_account.fileprocessor-cloudrun.email}"
     ]
 
     depends_on = [
-      google_storage_bucket.forms_repo
+      google_storage_bucket.forms_repo,
+      google_service_account.fileprocessor-cloudrun
+    ]
+}
+
+
+resource "google_storage_bucket_iam_binding" "write_access" {
+    bucket = "${google_storage_bucket.forms_repo.name}"
+    role = "roles/storage.admin"
+
+    members = [
+        "serviceAccount:${google_service_account.upload-cloudrun.email}"
+    ]
+
+    depends_on = [
+      google_storage_bucket.forms_repo,
+      google_service_account.upload-cloudrun
     ]
 }
 

@@ -10,7 +10,7 @@ locals {
 }
 
 #
-# Single resources like Artifact Repo, BigQuery and Document AI setup is done below. The other GCP resources are setup in the
+# Single resources like Artifact Repo The other GCP resources are setup in the
 # related .tf files due to having more setup requirements.
 #
 resource "google_artifact_registry_repository" "docai-demo-repo" {

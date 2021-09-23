@@ -33,3 +33,17 @@ module "bigquery" {
       module.project
     ]   
 }
+
+resource "google_project_iam_binding" "fileprocessor-bigquery-editor" {
+    project = "${module.project.project_id}"
+    role = "roles/bigquery.dataEditor"
+
+    members = [
+        "serviceAccount:${google_service_account.fileprocessor-cloudrun.email}"
+    ]
+
+    depends_on = [
+      module.project,
+      google_service_account.fileprocessor-cloudrun
+    ]
+}

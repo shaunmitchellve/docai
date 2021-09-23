@@ -23,6 +23,9 @@ You can extend this demo and load in your custom document object.
 The file processor service is built using an updated version of Node that does not come default with Cloud Shell. To upgrade Node in Cloud Shell
 run: `nvm install 14.17.6`
 
+If your environment has the following Organization Police Set you will need to update it with-in your project after it's been created in order to allow the Front End to be access by anyone:
+- constraints/iam.allowedPolicyMemberDomains
+
 ## Deploy Process
 
 `terraform init`
@@ -30,7 +33,7 @@ run: `nvm install 14.17.6`
 `terraform apply`
 
 Take the outputs from the above to replace the substitutions with the matching values
-`gcloud builds submit --substitutions=_DATASET="${DATASET}",_REGION="${REGION}",_ARTIFACT_NAME="${ARTIFACT_NAME}",_PROCESSOR_ID="${PROCESSOR_ID}"`
+`gcloud builds submit --substitutions=_DATASET="${DATASET}",_REGION="${REGION}",_ARTIFACT_NAME="${ARTIFACT_NAME}",_PROCESSOR_ID="${PROCESSOR_ID}",_STORAGE_BUCKET="${STORAGE_BUCKET}`
 
 ## Updates
 

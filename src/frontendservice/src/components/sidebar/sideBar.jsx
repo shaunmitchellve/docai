@@ -73,13 +73,14 @@ const SideBar = (props) => {
             const data = new FormData();
 
             data.append('file', event.target.files[0]);
-            axios.post('http://localhost:8080/upload', data, {
+            axios.post(`${process.env.REACT_APP_UPLOADSERVICE}/upload`, data, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             }).then( res => { 
                 setLoading(false);
                 snackHandle('success', 'Upload Successful');
+                console.log(res.data);
 
                 history.push('/view', {
                     fileUrl: res.data

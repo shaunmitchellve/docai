@@ -17,3 +17,11 @@ output "artifcat_repo_name" {
 output "dataset" {
     value = "${var.bigquery_dataset}"
 }
+
+output "frontend-url" {
+    value = "${google_cloud_run_service.frontend.status[0].url}"
+}
+
+output "storage_bucket_name" {
+    value = "${var.storage_bucket_name}"
+}

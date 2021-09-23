@@ -13,8 +13,8 @@ const useStyles = makeStyles( (theme) => ({
 
 const ViewFile = () => {
     const location = useLocation();
-    const fileUrl = location.state.fileUrl.url;
-    console.log(fileUrl);
+    const fileUrl = location.state.fileUrl;
+    console.log(`FILEURL: ${location.state.fileUrl}`);
     
     const classes = useStyles();
 

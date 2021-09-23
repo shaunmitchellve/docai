@@ -12,12 +12,14 @@ const dataset = process.env.DATASET;
 import {BigQuery} from '@google-cloud/bigquery';
 import {v1} from '@google-cloud/documentai';
 import {Storage} from '@google-cloud/storage';
+import {GoogleAuth} from 'google-auth-library';
 import {v4 as uuid} from 'uuid';
-import axios from 'axios';
+import {URL} from 'url';
 
 const {DocumentProcessorServiceClient} = v1;
 const client = new DocumentProcessorServiceClient();
 const storage = new Storage();
+const auth = new GoogleAuth();
 
 /**
  * @TODO If you don't wish to use the demo document then comment out these below 2 and
@@ -201,10 +203,16 @@ async function processDocument(bucketName, file) {
      * by calling the convert service /cutPages endpoint.
      */
     if (parentData.contentType === 'application/pdf') {
-        const res = await axios.post(`${process.env.CONVERTSERVICE}/cutPages`, {
-            file: {
-                name: file,
-                content: parentData.content,
+        const url = process.env.CONVERTSERVICE + '/cutPages';
+        const client = await auth.getIdTokenClient(new URL(url));
+        const res = await client.request({
+            url: url,
+            method: 'POST',
+            data: {
+                file: {
+                    name: file,
+                    content: parentData.content,
+                },
             },
         });
 
@@ -219,7 +227,7 @@ async function processDocument(bucketName, file) {
     /**
      * Process the array of documents / pages.
      */
-    fileArray.forEach( async (fileData) => {
+    for (const fileData of fileArray) {
         /**
          * Create the API request object. This is hard coded to be a PDF file for this demo
          */
@@ -368,7 +376,6 @@ async function processDocument(bucketName, file) {
             try {
                 await saveData('document_entities', docData);
             } catch (e) {
-                console.log(e);
                 const errors = [];
                 e.forEach( (err) => {
                     err.errors.forEach( (error) => {
@@ -398,9 +405,9 @@ async function processDocument(bucketName, file) {
                 }
             }
         }
+    }
 
-        return 'Document processed';
-    });
+    return 'Document processed';
 }
 
 export default processDocument;
