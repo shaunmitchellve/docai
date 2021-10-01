@@ -27,8 +27,8 @@ app.post('/upload', async (req, res) => {
     await uploadFile(req.file).then( (url) => {
         res.status(200).send(`${url}`);
     }).catch( (err) => {
+        console.error(err);
         const message = err.errors[0].message;
-        console.error(message);
         res.status(err.code).send(message);
     });
 });

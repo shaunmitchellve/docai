@@ -13,7 +13,6 @@ import {BigQuery} from '@google-cloud/bigquery';
 import {v1} from '@google-cloud/documentai';
 import {Storage} from '@google-cloud/storage';
 import {GoogleAuth} from 'google-auth-library';
-import {v4 as uuid} from 'uuid';
 import {URL} from 'url';
 
 const {DocumentProcessorServiceClient} = v1;
@@ -110,7 +109,8 @@ async function processDocument(bucketName, file) {
 
                     file.getMetadata().then( (mdata) => {
                         const contentType = mdata[0].contentType;
-                        res( {content: contents.toString('base64'), contentType: contentType} );
+                        const fileId = mdata[0].metadata.file_id;
+                        res( {content: contents.toString('base64'), contentType: contentType, fileId: fileId} );
                     }).catch( (err) => {
                         rej(err);
                     });
@@ -266,7 +266,7 @@ async function processDocument(bucketName, file) {
          * into BigQuery
          */
         const docData = {
-            doc_id: uuid(),
+            doc_id: parentData.fileId,
             name: file,
             num_pages: document.pages.length,
             mimeType: document.mimeType,

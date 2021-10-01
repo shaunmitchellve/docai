@@ -8,7 +8,7 @@ ENV PORT=8080
 WORKDIR /src
 
 COPY package*.json ./
-RUN npm install --production
+RUN npm ci
 COPY . .
 EXPOSE 8080
 CMD [ "npm", "start" ]
