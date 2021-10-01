@@ -271,6 +271,7 @@ async function processDocument(bucketName, file) {
             num_pages: document.pages.length,
             mimeType: document.mimeType,
             text: document.text,
+            date_added: new Date().toISOString().replace('T', ' ').replace('Z',''),
         };
 
         /**

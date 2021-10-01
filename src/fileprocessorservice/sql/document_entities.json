@@ -112,5 +112,10 @@
                         ]
                     }
                 ]
+            },
+            {
+                "name": "date_added",
+                "type": "DATETIME",
+                "mode": "REQUIRED"
             }
 ]
