@@ -45,7 +45,7 @@ const useStyles = makeStyles( (theme) => ({
       }
 }));
 
-const checkFileSize = event =>{
+const checkFileSize = event => {
     let file = event.target.files[0];
     let size = 5242880;
     if (file.size > size) {
@@ -73,7 +73,7 @@ const SideBar = (props) => {
             const data = new FormData();
 
             data.append('file', event.target.files[0]);
-            axios.post(`${process.env.REACT_APP_UPLOADSERVICE}/upload`, data, {
+            axios.post(`${process.env.REACT_APP_UPLOADSERVICE}/upload?key=${process.env.REACT_APP_APIKEY}&`, data, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -83,7 +83,7 @@ const SideBar = (props) => {
                 console.log(res.data);
 
                 history.push('/view', {
-                    fileUrl: res.data
+                    fileData: res.data
                 })
             }).catch( error => {console.error(error)});
         } else {

@@ -112,7 +112,7 @@ resource "google_cloud_run_service_iam_binding" "convert-pdf-iam" {
 # ----------------------------------------------------------------
 resource "google_cloud_run_service" "frontend" {
     project = "${module.project.project_id}"
-    name = "front-end"
+    name = "frontend"
     location = "${var.region}"
 
     template {
@@ -147,7 +147,7 @@ resource "google_cloud_run_service" "frontend" {
     service = "${google_cloud_run_service.frontend.name}"
     role = "roles/run.invoker"
     members = [
-        "allAuthenticatedUsers"
+        "allUsers"
     ]
 
     depends_on = [

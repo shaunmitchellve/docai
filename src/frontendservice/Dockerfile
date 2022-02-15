@@ -1,7 +1,11 @@
 FROM node:14-slim as build-step
 
 ARG uploadservice
+ARG apikey
+ARG dobbyservice
 ENV REACT_APP_UPLOADSERVICE=$uploadservice
+ENV REACT_APP_APIKEY=$apikey
+ENV REACT_APP_DOBBYSERVICE=$dobbyservice
 
 RUN mkdir /app
 

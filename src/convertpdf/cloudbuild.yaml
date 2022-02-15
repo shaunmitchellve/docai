@@ -1,0 +1,34 @@
+substitutions:
+  _CONVERT_SERVICE: 'convert-pdf'
+steps:
+# ---------------------------------------------
+# Convert PDF Build / Deploy - START
+# ---------------------------------------------
+- id: build-convertpdfservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - build
+    - -t
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}
+    - .
+  waitFor: ['-'] # Start immediately
+
+- id: push-convertservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - push
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}
+  waitFor:
+    - build-convertpdfservice
+
+- id: run-convertservice
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', '${_CONVERT_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}', '--region', '${_REGION}', 
+    '--platform', 'managed', '--service-account', 'pdfconvert-service@$PROJECT_ID.iam.gserviceaccount.com', '--no-allow-unauthenticated']
+  waitFor:
+    - push-convertservice
+# ---------------------------------------------
+# Convert PDF Build / Deploy - END
+# ---------------------------------------------
+tags: ['convertservice']

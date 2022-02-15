@@ -10,6 +10,9 @@ If you don't wish to use the demo document specific table and code then make the
 
 You can extend this demo and load in your custom document object.
 
+## Deploy
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/shaunmitchellve/docai.git&cloudshell_workspace=.&cloudshell_tutorial=docs/cloudshell-tutorial.md)
+
 ## Products
 
 - [Document AI](https://cloud.google.com/document-ai)
@@ -21,7 +24,7 @@ You can extend this demo and load in your custom document object.
 ## Notes
 
 The file processor service is built using an updated version of Node that does not come default with Cloud Shell. To upgrade Node in Cloud Shell
-run: `nvm install 14.17.6`
+run: `nvm install 14.17.6` `nvm install 16.14.0`
 
 If your environment has the following Organization Police Set you will need to update it with-in your project after it's been created in order to allow the Front End to be access by anyone:
 - constraints/iam.allowedPolicyMemberDomains
@@ -38,3 +41,7 @@ Take the outputs from the above to replace the substitutions with the matching v
 ## Updates
 
 This is provided as is with out any warranty. It's for demo purposes only and should NOT be run in any production environments.
+
+# Service Definitions
+
+File Processor Service

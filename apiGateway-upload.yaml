@@ -1,0 +1,37 @@
+swagger: '2.0'
+info:
+  title: upload
+  description: "Upload a file to a bucket for Doc AI Demo"
+  version: 1.0.0
+schemes:
+- https
+produces:
+- application/json
+x-google-backend:
+  address: https://upload-6l773bwsva-uw.a.run.app
+security:
+ - api_key: []
+paths:
+  /upload:
+    post:
+      summary: "Upload a file"
+      operationId: uploadFile
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in: formData
+          name: file
+          type: string
+          format: binary
+          description: "The file to upload"
+          required: true
+      responses:
+        200:
+          description: "The URL of the files location in GCS"
+          schema:
+            type: string
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "key"
+    in: "query"

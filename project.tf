@@ -120,6 +120,16 @@ resource "google_service_account" "frontend-cloudrun" {
       module.project
     ]
 }
+
+resource "google_service_account" "dobby-cloudrun" {
+    project = "${module.project.project_id}"
+    account_id = "dobby-service"
+    display_name = "Dobby (DB) Service"
+    description = "Cloud Run SA for the Dobby (DB) Service"
+    depends_on = [
+      module.project
+    ]
+}
 # ----------------------------------------------------------------
 # Service Account Creation - End
 # ----------------------------------------------------------------

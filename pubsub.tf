@@ -29,7 +29,7 @@ resource "google_pubsub_subscription" "fileProcessorSub" {
     name = "fileProcessorSub"
     topic = "${google_pubsub_topic.forms-pst.id}"
     project = "${module.project.project_id}"
-    ack_deadline_seconds = 20
+    ack_deadline_seconds = 30
 
     push_config {
         push_endpoint = "${google_cloud_run_service.document-processor.status[0].url}"

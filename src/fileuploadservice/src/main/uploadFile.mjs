@@ -7,12 +7,13 @@ const bucket = storage.bucket(process.env.BUCKETNAME);
 
 const uploadFile = (file) => new Promise( (res, rej) => {
     const {originalname, buffer, mimetype} = file;
+    const fileId = uuid();
 
     const fileOptions = {
         contentType: mimetype,
         resumable: false,
         metadata: {
-            file_id: uuid(),
+            file_id: fileId,
         },
     };
 
@@ -21,7 +22,12 @@ const uploadFile = (file) => new Promise( (res, rej) => {
         metadata: fileOptions,
     }).then( () => {
         const url = `https://storage.cloud.google.com/${bucket.name}/${blob.name}`;
-        res(url);
+        const ret = {
+            url: url,
+            fileId: fileId,
+        };
+
+        res(JSON.stringify(ret));
     }).catch( (err) => {
         rej(err);
     });

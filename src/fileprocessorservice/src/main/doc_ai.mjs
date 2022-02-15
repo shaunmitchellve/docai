@@ -104,19 +104,27 @@ async function processDocument(bucketName, file) {
 
         return new Promise( (res, rej) => {
             file.exists().then( () => {
-                file.download( (err, contents) => {
-                    if (err) rej(err);
-
-                    file.getMetadata().then( (mdata) => {
-                        const contentType = mdata[0].contentType;
-                        const fileId = mdata[0].metadata.file_id;
-                        res( {content: contents.toString('base64'), contentType: contentType, fileId: fileId} );
-                    }).catch( (err) => {
-                        rej(err);
-                    });
+              file.download().then( (contents) => {
+                file.getMetadata().then( (mdata) => {
+                  const contentType = mdata[0].contentType;
+                  try {
+                    const fileId = mdata[0].metadata.file_id;
+                    res( {content: contents.toString('base64'), contentType: contentType, fileId: fileId} );
+                  } catch (e) {
+                    console.log('Throwing Error');
+                    throw(e);
+                  }
+                }).catch( (e) => {
+                  console.log('Catch 1: Rejecting Error')
+                  throw(e);
                 });
-            }).catch( (err) => {
-                rej(err);
+              }).catch( (e) => {
+                console.log('Catch 2: Throwing Error')
+                throw(e);
+              });
+            }).catch( (e) => {
+                console.log('Catch 3: Rejecting')
+                rej(e);
             });
         });
     };
@@ -195,33 +203,39 @@ async function processDocument(bucketName, file) {
     /**
      * Read the file from GCS storage using our helper function
      */
-    const parentData = await readFile({bucketName, file});
     const fileArray = [];
+    try {
+      const parentData = await readFile({bucketName, file})
+      .catch((err) => { throw (err); });
+      
 
-    /**
-     * If this is a PDF file, then convert the PDF file into indivdual pages
-     * by calling the convert service /cutPages endpoint.
-     */
-    if (parentData.contentType === 'application/pdf') {
-        const url = process.env.CONVERTSERVICE + '/cutPages';
-        const client = await auth.getIdTokenClient(new URL(url));
-        const res = await client.request({
-            url: url,
-            method: 'POST',
-            data: {
-                file: {
-                    name: file,
-                    content: parentData.content,
-                },
-            },
-        });
+      /**
+       * If this is a PDF file, then convert the PDF file into indivdual pages
+       * by calling the convert service /cutPages endpoint.
+       */
+      if (parentData.contentType === 'application/pdf') {
+          const url = process.env.CONVERTSERVICE + '/cutPages';
+          const client = await auth.getIdTokenClient(new URL(url));
+          const res = await client.request({
+              url: url,
+              method: 'POST',
+              data: {
+                  file: {
+                      name: file,
+                      content: parentData.content,
+                  },
+              },
+          });
 
-        res.data.forEach( (pdfFile) => {
-            pdfFile.contentType = 'application/pdf';
-            fileArray.push(pdfFile);
-        });
-    } else {
-        fileArray.push(parentData);
+          res.data.forEach( (pdfFile) => {
+              pdfFile.contentType = 'application/pdf';
+              fileArray.push(pdfFile);
+          });
+      } else {
+          fileArray.push(parentData);
+      }
+    } catch(err) {
+      throw(err);
     }
 
     /**
@@ -250,7 +264,7 @@ async function processDocument(bucketName, file) {
             text = document.text;
             console.log('Document Processed by DocAI');
         } catch ( err ) {
-            throw new Error(err);
+            throw err;
         }
         /**
          * DEBUG - Write API results to a file

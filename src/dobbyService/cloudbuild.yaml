@@ -1,0 +1,40 @@
+steps:
+# ---------------------------------------------
+# Dobby Build / Deploy - START
+# ---------------------------------------------
+- id: build-dobbyservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - build
+    - -t
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_NAME/${_DOBBY_SERVICE}
+    - --build-arg
+    - DATASET=${_DATASET}
+    - --build-arg
+    - $PROJECT_ID
+    - .
+
+- id: push-dobbyservice
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - push
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_DOBBY_SERVICE}
+  waitFor:
+    - build-dobbyservice
+
+- id: run-dobbyservice
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', '${_DOBBY_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_DOBBY_SERVICE}', '--region', '${_REGION}', 
+    '--platform', 'managed', '--service-account', 'dobby-service@$PROJECT_ID.iam.gserviceaccount.com', '--no-allow-unauthenticated']
+  waitFor:
+    - push-dobbyservice
+# ---------------------------------------------
+# Upload Build / Deploy - END
+# ---------------------------------------------
+tags: ['tagsservice']
+substitutions:
+    _ARTIFACT_NAME: 'doc-ai-demo-repo'
+    _REGION: 'us-west1'
+    _DATASET: 'doc_ai_demo'
+    _DOBBY_SERVICE: 'dobby'

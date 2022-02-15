@@ -39,7 +39,7 @@ steps:
   args:
     - '-c'
     - |
-      gcloud run services list --platform managed | grep -Eo 'https://${_CONVERT_SERVICE}[a-zA-Z0-9.-]*' > /workspace/convert-service-url.txt
+      gcloud run services list --platform managed --project $PROJECT_ID | grep -Eo 'https://${_CONVERT_SERVICE}[a-zA-Z0-9.-]*' > /workspace/convert-service-url.txt
   waitFor:
     - push-convertservice
 
@@ -57,6 +57,7 @@ steps:
       ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_CONVERT_SERVICE}:latest src/fileprocessorservice
   waitFor:
     - push-convertservice
+    - get-runserviceurl
 
 - id: push-processorservice
   name: 'gcr.io/cloud-builders/docker'
@@ -106,7 +107,7 @@ steps:
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
   args: ['run', 'deploy', '${_UPLOAD_SERVICE}', '--image', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_NAME}/${_UPLOAD_SERVICE}', '--region', '${_REGION}', 
-    '--platform', 'managed', '--service-account', 'upload-service@$PROJECT_ID.iam.gserviceaccount.com', '--allow-unauthenticated']
+    '--platform', 'managed', '--service-account', 'upload-service@$PROJECT_ID.iam.gserviceaccount.com', '--no-allow-unauthenticated']
   waitFor:
     - push-uploadservice
 # ---------------------------------------------
@@ -122,7 +123,7 @@ steps:
   args:
     - '-c'
     - |
-      gcloud run services list --platform managed | grep -Eo 'https://${_UPLOAD_SERVICE}[a-zA-Z0-9.-]*' > /workspace/upload-service-url.txt
+      gcloud run services list --platform managed --project $PROJECT_ID | grep -Eo 'https://${_UPLOAD_SERVICE}[a-zA-Z0-9.-]*' > /workspace/upload-service-url.txt
   waitFor:
     - run-uploadservice
 

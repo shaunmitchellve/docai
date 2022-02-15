@@ -6,6 +6,9 @@
  */
 import processDocument from './doc_ai.mjs';
 import express, {json} from 'express';
+import { start } from '@google-cloud/debug-agent';
+start({serviceContext: {enableCanary: false}});
+
 const app = express();
 
 const PORT = process.env.PORT || 8080;
