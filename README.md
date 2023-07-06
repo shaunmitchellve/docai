@@ -1,3 +1,7 @@
+# ARCHIVE NOTICE
+This demo is old and the product has changed a lot since I first created it. This wil be archived for now and eventually removed in the near future. The libraires contained here have not been updated to use any of the latest versions so vulnerabilities are very likely as they are old!
+------------------
+
 # Document AI Demo
 
 The Document AI Demo is a simple use-case of uploading a document into a Google Cloud Storage bucket
